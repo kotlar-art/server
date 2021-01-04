@@ -7,7 +7,7 @@ public class IntegerMessage extends Message<Integer>{
     final private Integer content;
     final private Database database;
 
-    public IntegerMessage(int op, Integer i) {
+    public IntegerMessage(short op, Integer i) {
         super(op);
         content = i;
         database = Database.getInstance();
@@ -56,7 +56,7 @@ public class IntegerMessage extends Message<Integer>{
         catch (IllegalAccessException i){
             return createError(opcode);
         }
-        return createACK(opcode, "unregistered successfully");
+        return createACK(opcode, "");
     }
 
 
@@ -69,7 +69,7 @@ public class IntegerMessage extends Message<Integer>{
                 i.printStackTrace();
                 return createError(opcode);
             }
-            return createACK(opcode, "registered to course successfully");
+            return createACK(opcode, "");
         }
         return createError(opcode);
     }

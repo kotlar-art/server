@@ -2,24 +2,19 @@ package bgu.spl.net.api;
 
 public class AckMessage extends Message<Integer>{
 
-    private Integer content;
+    private short content;
     private String StringForClient;
 
-    public AckMessage(int ackWhat) {
-        super(12);
-        content = ackWhat;
-        StringForClient = null;
-    }
-
-    public AckMessage(int ackWhat, String messageForClient) {
-        super(12);
+    public AckMessage(short ackWhat, String messageForClient) {
+        super((short) 12);
         content = ackWhat;
         StringForClient = messageForClient;
+        if (StringForClient.length()>0) StringForClient = StringForClient + '\0';
     }
 
     public byte[] actOnEncoder(){
-        byte[] op = IntToBytes(opcode);
-        byte[] con = IntToBytes(content);
+        byte[] op = shortToBytes((short) 12);
+        byte[] con = shortToBytes(content);
         byte[] message = StringForClient.getBytes();
         return merge(op, con, message);
     }
@@ -31,7 +26,7 @@ public class AckMessage extends Message<Integer>{
 
     @Override
     Integer getContent() {
-        return content;
+        return (int)content;
     }
 
 

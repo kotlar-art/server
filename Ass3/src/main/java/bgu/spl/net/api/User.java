@@ -67,8 +67,9 @@ public class User implements Comparable<User>{
 
     public void registerToCourse(Course course){
          int i = 0;
+         int courseOrder = course.getOrderNumber();
          synchronized (courseslock) {
-             while (i < registeredCourses.size() && course.getCourseNumber() > registeredCourses.elementAt(i).getCourseNumber())
+             while (i < registeredCourses.size() && courseOrder > registeredCourses.elementAt(i).getOrderNumber())
                  i++;
              registeredCourses.add(i, course);
              quickAccess.putIfAbsent(course.getCourseNumber(), course);

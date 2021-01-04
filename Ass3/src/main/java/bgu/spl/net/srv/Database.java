@@ -55,6 +55,7 @@ public class Database {
         try {
             reader = new BufferedReader(new FileReader(coursesFilePath));
             String line = reader.readLine();
+            int order = 1;
             while (line != null) {
                 System.out.println("the whole line of the course is " + line);
                 int i = 0;
@@ -100,8 +101,9 @@ public class Database {
                 int maxStudents = Integer.parseInt(maxStudentsString);
                 System.out.println("max students is " + maxStudents);
 
-                Course newCourse = new Course(courseNumber, courseName, kdam, maxStudents);
+                Course newCourse = new Course(order, courseNumber, courseName, kdam, maxStudents);
                 courses.putIfAbsent(courseNumber, newCourse);
+                order++;
                 // read next line
                 line = reader.readLine();
             }

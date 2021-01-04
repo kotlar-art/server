@@ -7,7 +7,7 @@ public class StringsMessage extends Message<String[]>{
     final private String[] content;
     private Database database;
 
-    public StringsMessage(int op, String[] content) {
+    public StringsMessage(short op, String[] content) {
         super(op);
         this.content = content;
         database = Database.getInstance();
@@ -48,7 +48,7 @@ public class StringsMessage extends Message<String[]>{
         User newAdmin = database.registerAdmin(content[0], content[1]);
         if (newAdmin!=null) {
             p.setUser(newAdmin);
-            return createACK(opcode, "registered as admin successfully");
+            return createACK(opcode, "");
         }
         return createError(opcode);
     }
@@ -58,7 +58,7 @@ public class StringsMessage extends Message<String[]>{
         User newStudent = database.registerStudent(content[0], content[1]);
         if (newStudent!=null) {
             p.setUser(newStudent);
-            return createACK(opcode, "registered as student successfully");
+            return createACK(opcode, "");
         }
         return createError(opcode);
     }
@@ -76,7 +76,7 @@ public class StringsMessage extends Message<String[]>{
             i.printStackTrace();
             return createError(opcode);
         }
-        return createACK(opcode, "Logged in successfully");
+        return createACK(opcode, "");
 
     }
     private Message opcode4(User user) {
@@ -92,7 +92,7 @@ public class StringsMessage extends Message<String[]>{
             e.printStackTrace();
             return createError(opcode);
         }
-        return createACK(opcode, "user logged out successfully");
+        return createACK(opcode, "");
 
     }
 

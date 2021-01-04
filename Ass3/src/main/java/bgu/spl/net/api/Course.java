@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Course {
 
+    final private int orderNumber;
     final private int courseNumber;
     final private String courseName;
     final private Vector<Integer> KdamCourses;
@@ -14,7 +15,8 @@ public class Course {
     private Object studentsLock;
 
 
-    public Course(int courseNum, String name, Vector<Integer> kdam, int maxStudents){
+    public Course(int orderNumber, int courseNum, String name, Vector<Integer> kdam, int maxStudents){
+        this.orderNumber = orderNumber;
         courseNumber = courseNum;
         courseName = name;
         KdamCourses = kdam;
@@ -22,6 +24,10 @@ public class Course {
         quickAccess = new ConcurrentHashMap<String, User>();
         this.maxStudents = maxStudents;
         studentsLock = new Object();
+    }
+
+    public int getOrderNumber() {
+        return orderNumber;
     }
 
     public int getCourseNumber(){

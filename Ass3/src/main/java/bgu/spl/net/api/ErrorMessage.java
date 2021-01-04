@@ -2,10 +2,10 @@ package bgu.spl.net.api;
 
 public class ErrorMessage extends Message<Integer>{
 
-    private Integer content;
+    private short content;
 
-    public ErrorMessage(int errorFor) {
-        super(13);
+    public ErrorMessage(short errorFor) {
+        super((short)13);
         content = errorFor;
     }
 
@@ -15,14 +15,14 @@ public class ErrorMessage extends Message<Integer>{
     }
 
     public byte[] actOnEncoder(){
-        byte[] op = IntToBytes(opcode);
-        byte[] err = IntToBytes(content);
+        byte[] op = shortToBytes((short)13);
+        byte[] err = shortToBytes(content);
         byte[] emp = new byte[0];
         return merge(op, err, emp);
     }
 
     @Override
     Integer getContent() {
-        return content;
+        return (int)content;
     }
 }

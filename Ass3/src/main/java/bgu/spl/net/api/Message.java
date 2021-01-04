@@ -6,9 +6,9 @@ import java.io.Serializable;
 
 public abstract class Message<T> implements Serializable {
 
-    final protected int opcode;
+    final protected short opcode;
 
-    public Message(int op){
+    public Message(short op){
         opcode = op;
 
     }
@@ -31,7 +31,7 @@ public abstract class Message<T> implements Serializable {
         return result;
     }
 
-    protected byte[] IntToBytes(Integer num)
+    public byte[] shortToBytes(short num)
     {
         byte[] bytesArr = new byte[2];
         bytesArr[0] = (byte)((num >> 8) & 0xFF);
@@ -45,11 +45,11 @@ public abstract class Message<T> implements Serializable {
 
     abstract T getContent();
 
-    protected Message createError(int errorFor){
+    protected Message createError(short errorFor){
         return new ErrorMessage(errorFor);
     }
 
-    protected Message createACK(int ackWhat, String messageForClient){
+    protected Message createACK(short ackWhat, String messageForClient){
         return new AckMessage(ackWhat, messageForClient);
     }
 }

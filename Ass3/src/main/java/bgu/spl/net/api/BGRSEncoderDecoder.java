@@ -14,7 +14,7 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
     private byte[] bytes = new byte[1 << 10];
     private int len = 0;
     private int end = -1;
-    int opcode = 0;
+    short opcode = 0;
     int zeroCounter = 0;
     Command command= Command.CourseNumberCommand;
 
@@ -24,11 +24,11 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
             return popMessage();
         }
         if(len == 2){
-            opcode = bytesToInt(bytes[0], bytes[1]);
+            opcode = bytesToShort(bytes, 0, 1);
             setDecoder(opcode);
         }
         if(command == Command.invalidInputCommand){
-            return new IntegerMessage(0,0);
+            return new IntegerMessage((short) 0,0);
         }
         pushByte(nextByte);
         return null;
@@ -48,7 +48,7 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
             return new StringsMessage(opcode, arr);
         }
         else if(command == Command.CourseNumberCommand){
-            int content = bytesToInt(bytes[len-2], bytes[len-1]);
+            int content = bytesToShort(bytes, len-2, len-1);
             reset();
             return new IntegerMessage(opcode, content);
         }
@@ -101,10 +101,10 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
         }
     }
 
-    private int bytesToInt(byte first, byte second)
+    public short bytesToShort(byte[] byteArr, int index1, int index2)
     {
-        int result = (int)((first & 0xff) << 8);
-        result += (int)(second & 0xff);
+        short result = (short)((byteArr[index1] & 0xff) << 8);
+        result += (short)(byteArr[index2] & 0xff);
         return result;
     }
 
