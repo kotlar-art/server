@@ -16,7 +16,10 @@ public class IntegerMessage extends Message<Integer>{
     @Override
     Message actOnProtocol(Protocol p) {
         User user = p.getUser();
-        if (p.getUser()==null) return createError(opcode);
+        if (p.getUser()==null){
+            System.out.println("user is null");
+            return createError(opcode);
+        }
         if (opcode==5){
             return opcode5(user);
         }
@@ -88,12 +91,13 @@ public class IntegerMessage extends Message<Integer>{
     private Message opcode7(User sender) {
 
         if (sender.isAdmin()){
+            System.out.println("sender is admin");
             String output = "";
             try {
                 output = database.getCourseStat(content);
             }
             catch (IllegalAccessException i){
-                createError(opcode);
+                return createError(opcode);
             }
             return createACK(opcode, output);
         }

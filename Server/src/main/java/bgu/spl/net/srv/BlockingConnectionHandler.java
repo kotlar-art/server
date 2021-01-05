@@ -41,6 +41,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
                         System.out.println("response is not null");
                         out.write(encdec.encode(response));
                         out.flush();
+                        debug = 0;
                     }
                 }
                 else {

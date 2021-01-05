@@ -21,7 +21,7 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
 
     @Override
     public Message decodeNextByte(byte nextByte) {
-        System.out.println(nextByte);
+        System.out.println("byte is " + nextByte);
         if(len == 2){
             readingOpcode = false;
             System.out.println("reached 2 bytes");
@@ -75,6 +75,7 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
         len = 0;
         zeroCounter = 0;
         end = -1;
+        readingOpcode = true;
     }
 
 

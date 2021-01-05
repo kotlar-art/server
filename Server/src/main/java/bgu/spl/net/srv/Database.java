@@ -2,7 +2,6 @@ package bgu.spl.net.srv;
 
 import bgu.spl.net.api.Course;
 import bgu.spl.net.api.User;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -115,7 +114,7 @@ public class Database {
         return true;
     }
 
-    public User registerAdmin(String username, String password) {
+    public User registerAdmin(String username, String password) throws IllegalAccessException{
         if (!users.containsKey(username)){
             synchronized (usersLock){
                 if (!users.containsKey(username)) {
@@ -123,6 +122,7 @@ public class Database {
                     users.put(username, newAdmin);
                     return newAdmin;
                 }
+                throw new IllegalAccessException("you tried registering an aadmin and the username already exists");
             }
         }
         return null;
@@ -141,13 +141,13 @@ public class Database {
         return null;
     }
 
-    public void logIn(String username, String password) throws IllegalAccessException, IllegalArgumentException{
+    public User logIn(String username, String password) throws IllegalAccessException, IllegalArgumentException{
         User logAttempt = users.get(username);
         if (logAttempt!=null){
             if (!logAttempt.isLoggedIn()){
                 if (logAttempt.getPassword().equals(password)) {
                     logAttempt.logIn();
-                    return;
+                    return logAttempt;
                 }
                 throw new IllegalAccessException("password incorrect");
             }

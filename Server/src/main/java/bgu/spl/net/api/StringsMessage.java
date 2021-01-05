@@ -20,15 +20,15 @@ public class StringsMessage extends Message<String[]>{
         if (client==null){
             if (opcode==1){//register Admin
                 System.out.println("entered register admin and opcode is " + opcode);
-                return opcode1(p);
+                return opcode1();
             }
             if (opcode==2){//register Student
-                return opcode2(p);
+                return opcode2();
+            }
+            if (opcode==3){//log in
+                return opcode3(p);
             }
             return createError(opcode);
-        }
-        if (opcode==3){//log in
-            return opcode3();
         }
         if (opcode==4){//log out
             return opcode4(client);
@@ -46,30 +46,34 @@ public class StringsMessage extends Message<String[]>{
         return null;
     }
 
-    private Message opcode1(Protocol p){
-        User newAdmin = database.registerAdmin(content[0], content[1]);
+    private Message opcode1(){
+        User newAdmin;
+        try{
+            newAdmin = database.registerAdmin(content[0], content[1]);
+        }
+        catch (IllegalAccessException i){
+            return createError(opcode);
+        }
         if (newAdmin!=null) {
-            p.setUser(newAdmin);
-            System.out.println("username is " + content[0] + " password is " + content[1]);
             return createACK(opcode, "");
         }
         return createError(opcode);
     }
 
-    private Message opcode2(Protocol p){
+    private Message opcode2(){
 
         User newStudent = database.registerStudent(content[0], content[1]);
         if (newStudent!=null) {
-            p.setUser(newStudent);
             return createACK(opcode, "");
         }
         return createError(opcode);
     }
 
-    private Message opcode3(){
-
+    private Message opcode3(Protocol p){
+        User newUser;
         try{
-            database.logIn(content[0], content[1]);
+            newUser = database.logIn(content[0], content[1]);
+            System.out.println("username is " + content[0] + " password is " + content[1]);
         }
         catch (IllegalAccessException i){
             i.printStackTrace();
@@ -79,6 +83,7 @@ public class StringsMessage extends Message<String[]>{
             i.printStackTrace();
             return createError(opcode);
         }
+        p.setUser(newUser);
         return createACK(opcode, "");
 
     }
