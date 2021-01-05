@@ -8,6 +8,7 @@ public class TPCMain {
 
     public static void main(String args[]) {
 
+        System.out.println("entered main");
         int port = Integer.decode(args[0]).intValue();
         BaseServer b = new BaseServer(port, ()->new Protocol(), ()->new BGRSEncoderDecoder()) {
             @Override

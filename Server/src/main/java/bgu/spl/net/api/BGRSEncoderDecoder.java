@@ -17,20 +17,27 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
     short opcode = 0;
     int zeroCounter = 0;
     Command command= Command.CourseNumberCommand;
+    boolean readingOpcode = true;
 
     @Override
     public Message decodeNextByte(byte nextByte) {
-        if(toEnd()){
-            return popMessage();
-        }
+        System.out.println(nextByte);
         if(len == 2){
+            readingOpcode = false;
+            System.out.println("reached 2 bytes");
             opcode = bytesToShort(bytes, 0, 1);
+            System.out.println("opcode is " + opcode);
             setDecoder(opcode);
         }
         if(command == Command.invalidInputCommand){
+            System.out.println("invalid input");
             return new IntegerMessage((short) 0,0);
         }
         pushByte(nextByte);
+        if(toEnd()){
+            System.out.println("to end");
+            return popMessage();
+        }
         return null;
     }
 
@@ -44,7 +51,9 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
             byte[] b = Arrays.copyOfRange(bytes, 2,len);
             String content = new String(b, StandardCharsets.UTF_8);
             reset();
+            System.out.println(content);
             String[] arr = content.split("\0", 2);
+            System.out.println("arr at 0 is " + arr[0] + "arr at 1 is " + arr[1]);
             return new StringsMessage(opcode, arr);
         }
         else if(command == Command.CourseNumberCommand){
@@ -71,10 +80,13 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
 
     private void pushByte(byte nextByte) {
         if (len >= bytes.length) {
+            System.out.println("len is larger than bytes length");
             bytes = Arrays.copyOf(bytes, len * 2);
         }
         bytes[len++] = nextByte;
-        if(nextByte == '\0'){
+        byte zero = '\0';
+        if(nextByte == zero&&!readingOpcode){
+            System.out.println("increased zero counter");
             zeroCounter++;
         }
     }
@@ -82,20 +94,21 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
     private void setDecoder(int opcode) {
         if(opcode < 1 || opcode > 11){
             command = Command.invalidInputCommand;
+            return;
         }
         if(opcode >= 1 && opcode <=3){
             end = 2;
             command = Command.UsernameBasedCommand;
         }
-        else if(opcode == 4 || opcode == 11){
+        if(opcode == 4 || opcode == 11){
             end = 2;
             command = Command.OpcodeCommand;
         }
-        else if(opcode == 8){
+        if(opcode == 8){
             end = 1;
             command = Command.UsernameBasedCommand;
         }
-        else{
+        if (opcode==5||opcode==6||opcode==7||opcode==9||opcode==10){
             end = 4;
             command = Command.CourseNumberCommand;
         }

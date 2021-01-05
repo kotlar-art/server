@@ -9,6 +9,7 @@ public class StringsMessage extends Message<String[]>{
 
     public StringsMessage(short op, String[] content) {
         super(op);
+        System.out.println("string messsage created for " + opcode);
         this.content = content;
         database = Database.getInstance();
     }
@@ -18,6 +19,7 @@ public class StringsMessage extends Message<String[]>{
         User client = p.getUser();
         if (client==null){
             if (opcode==1){//register Admin
+                System.out.println("entered register admin and opcode is " + opcode);
                 return opcode1(p);
             }
             if (opcode==2){//register Student
@@ -48,6 +50,7 @@ public class StringsMessage extends Message<String[]>{
         User newAdmin = database.registerAdmin(content[0], content[1]);
         if (newAdmin!=null) {
             p.setUser(newAdmin);
+            System.out.println("username is " + content[0] + " password is " + content[1]);
             return createACK(opcode, "");
         }
         return createError(opcode);
