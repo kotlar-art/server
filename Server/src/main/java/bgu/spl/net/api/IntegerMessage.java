@@ -17,59 +17,75 @@ public class IntegerMessage extends Message<Integer>{
     Message actOnProtocol(Protocol p) {
         User user = p.getUser();
         if (p.getUser()==null){
-            System.out.println("user is null");
             return createError(opcode);
         }
+        if (opcode==4){//log out
+            return logOut(user);
+        }
         if (opcode==5){
-            return opcode5(user);
+            return courseReg(user);
         }
         if (opcode==6){
-            return opcode6();
+            return kdamCheck();
         }
         if (opcode==7){
-            return opcode7(user);
+            return courseStat(user);
         }
         if (opcode==9){
-            return opcode9(user);
+            return isRegistered(user);
         }
         if (opcode==10){
-            return opcode10(user);
+            return unRegister(user);
         }
         if (opcode==11)
             return MyCourses(user);
-        return null;
+        return createError(opcode);
     }
 
     private Message MyCourses(User user) {
-        if (user.isAdmin()) createError(opcode);
+        if (user.isAdmin()) return createError(opcode);
         String output = "";
         try {
             output = database.getCoursesOf(user.getUsername());
         }
         catch (IllegalAccessException i){
+//            i.printStackTrace();
             return createError(opcode);
         }
         return createACK(opcode, output);
     }
 
-    private Message opcode10(User sender) {
+    private Message unRegister(User sender) {
         try {
             database.unRegisterTo(sender.getUsername(), content);
         }
         catch (IllegalAccessException i){
+//            i.printStackTrace();
+            return createError(opcode);
+        }
+        return createACK(opcode, "");
+    }
+
+    private Message logOut(User user) {
+
+        try {
+            database.logOut(user.getUsername());
+        }
+        catch (IllegalAccessException e){
+//            e.printStackTrace();
             return createError(opcode);
         }
         return createACK(opcode, "");
     }
 
 
-    private Message opcode5(User sender) {
+    private Message courseReg(User sender) {
         if (!sender.isAdmin()){
             try {
                 database.courseRegister(sender.getUsername(), content);
             }
             catch (IllegalAccessException i){
-                i.printStackTrace();
+//                i.printStackTrace();
                 return createError(opcode);
             }
             return createACK(opcode, "");
@@ -77,26 +93,27 @@ public class IntegerMessage extends Message<Integer>{
         return createError(opcode);
     }
 
-    private Message opcode6() {
+    private Message kdamCheck() {
         String kdam = "";
         try {
             kdam = database.kdamCoursesOf(content);
         }
         catch (IllegalAccessException i){
+//            i.printStackTrace();
             return createError(opcode);
         }
         return createACK(opcode, kdam);
     }
 
-    private Message opcode7(User sender) {
+    private Message courseStat(User sender) {
 
         if (sender.isAdmin()){
-            System.out.println("sender is admin");
             String output = "";
             try {
                 output = database.getCourseStat(content);
             }
             catch (IllegalAccessException i){
+//                i.printStackTrace();
                 return createError(opcode);
             }
             return createACK(opcode, output);
@@ -104,13 +121,14 @@ public class IntegerMessage extends Message<Integer>{
         return createError(opcode);
     }
 
-    private Message opcode9(User sender) {
+    private Message isRegistered(User sender) {
         if (!sender.isAdmin()){
             String isRegistered = "";
             try {
                 isRegistered = database.isRegistered(sender.getUsername(), content);
             }
             catch (IllegalAccessException i){
+//                i.printStackTrace();
                 return createError(opcode);
             }
             return createACK(opcode, isRegistered);

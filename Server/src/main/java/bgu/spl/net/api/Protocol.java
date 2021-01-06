@@ -28,6 +28,8 @@ public class Protocol implements MessagingProtocol<Message>{
     }
 
     public void setUser(User user){
-        if (user==null) this.user = user;
+        if (this.user ==null) {
+            this.user = user;
+        }
     }
 }

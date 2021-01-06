@@ -2,6 +2,7 @@ package bgu.spl.net.api;
 
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class User implements Comparable<User>{
      final private String username;
@@ -10,7 +11,7 @@ public class User implements Comparable<User>{
      private Vector<Course> registeredCourses;
      private ConcurrentHashMap<Integer, Course> quickAccess;
      final boolean isAdmin;
-     private boolean loggedIn;
+     private Boolean loggedIn;
      private Object courseslock;
 
      public User(String username, String password, boolean isAdmin){
@@ -42,7 +43,7 @@ public class User implements Comparable<User>{
     }
 
     public boolean isLoggedIn() {
-        return loggedIn;
+         return loggedIn;
     }
 
     public void logIn(){
@@ -50,30 +51,30 @@ public class User implements Comparable<User>{
     }
 
     public void logOut(){
-         loggedIn = false;
+        loggedIn = false;
     }
 
     public String getStat(){
         String output = "Student: " + username + "\n";
         String courses = "[";
-        synchronized (courseslock){
+        //synchronized (courseslock){
             for (int i = 0; i<registeredCourses.size();i++){
                 if (i==registeredCourses.size()-1) courses = courses + registeredCourses.get(i).getCourseNumber();
                 else courses = courses + registeredCourses.get(i).getCourseNumber() + ",";
             }
-        }
+       // }
         return output + "Courses: " + courses + "]";
     }
 
     public void registerToCourse(Course course){
          int i = 0;
          int courseOrder = course.getOrderNumber();
-         synchronized (courseslock) {
+         //synchronized (courseslock) {
              while (i < registeredCourses.size() && courseOrder > registeredCourses.elementAt(i).getOrderNumber())
                  i++;
              registeredCourses.add(i, course);
              quickAccess.putIfAbsent(course.getCourseNumber(), course);
-         }
+         //}
 
     }
 
@@ -83,43 +84,45 @@ public class User implements Comparable<User>{
     }
 
     public boolean isRegisteredTo(Integer courseNumber){
-         synchronized (courseslock) {
+         //synchronized (courseslock) {
              return quickAccess.containsKey(courseNumber);
-         }
+        // }
     }
 
-    public void printCourses(){
-         String s = username + " is registered to: ";
-         for (int i = 0; i<registeredCourses.size(); i++){
-             s = s + registeredCourses.get(i).getCourseName() + ", ";
-         }
-        System.out.println(s);
+    public boolean isQualified(Course course){
+         Vector<Integer> kdam = course.getKdamAsVector();
+         //synchronized (courseslock){
+             for(int i = 0;i<kdam.size();i++){
+                 if (!quickAccess.containsKey(kdam.get(i))) return false;
+             }
+             return true;
+         //}
     }
 
     public boolean isRegisteredtTo(Vector<Integer> kdam) {
-         synchronized (courseslock){
+         //synchronized (courseslock){
              for (int i = 0; i<kdam.size();i++){
                  if (!quickAccess.containsKey(kdam.get(i))) return false;
              }
              return true;
-         }
+         //}
     }
 
     public void unRegister(Course course) {
-         synchronized (courseslock){
+         //synchronized (courseslock){
              registeredCourses.remove(course);
              quickAccess.remove(course.getCourseNumber());
-         }
+         //}
     }
 
     public String getCoursesAsString() {
         String courses = "[";
-        synchronized (courseslock){
+        //synchronized (courseslock){
             for (int i = 0; i<registeredCourses.size();i++){
                 if (i==registeredCourses.size()-1) courses = courses + registeredCourses.get(i).getCourseNumber();
                 else courses = courses + registeredCourses.get(i).getCourseNumber() + ",";
             }
             return courses + "]";
-        }
+        //}
     }
 }

@@ -2,6 +2,8 @@ package bgu.spl.net.srv;
 
 import bgu.spl.net.api.Course;
 import bgu.spl.net.api.User;
+
+import javax.print.DocFlavor;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -21,6 +23,7 @@ public class Database {
     private ConcurrentHashMap<String, User> users;
     private ConcurrentHashMap<Integer, Course> courses;
     private Object usersLock;
+    private Object coursesLock;
 
 
 
@@ -46,17 +49,16 @@ public class Database {
         courses = new ConcurrentHashMap<Integer, Course>();
         users = new ConcurrentHashMap<String, User>();
         usersLock = new Object();
-        initialize("CoursesAss3");
+        initialize("Courses.txt");
     }
     boolean initialize(String coursesFilePath) {
-
         BufferedReader reader;
         try {
             reader = new BufferedReader(new FileReader(coursesFilePath));
             String line = reader.readLine();
             int order = 1;
             while (line != null) {
-                System.out.println("the whole line of the course is " + line);
+//                System.out.println("the whole line of the course is " + line);
                 int i = 0;
                 String courseStringNumber = "";
                 while (line.charAt(i)!='|'){
@@ -65,7 +67,7 @@ public class Database {
                     i++;
                 }
                 int courseNumber = Integer.parseInt(courseStringNumber);
-                System.out.println("course number is " + courseNumber);
+//                System.out.println("course number is " + courseNumber);
                 i++;
                 String courseName = "";
                 while (line.charAt(i)!='|'){
@@ -73,7 +75,7 @@ public class Database {
                     courseName = courseName + next;
                     i++;
                 }
-                System.out.println("course name is " + courseName);
+//                System.out.println("course name is " + courseName);
                 i++;
                 Vector<Integer> kdam = new Vector<>();
                 String nextKdamCourseNumber = "";
@@ -89,7 +91,7 @@ public class Database {
                     }
                     i++;
                 }
-                System.out.println("kdam courses are " + kdam.toString());
+//                System.out.println("kdam courses are " + kdam.toString());
                 i++;
                 String maxStudentsString = "";
                 while (i<line.length()){
@@ -98,7 +100,7 @@ public class Database {
                     i++;
                 }
                 int maxStudents = Integer.parseInt(maxStudentsString);
-                System.out.println("max students is " + maxStudents);
+//                System.out.println("max students is " + maxStudents);
 
                 Course newCourse = new Course(order, courseNumber, courseName, kdam, maxStudents);
                 courses.putIfAbsent(courseNumber, newCourse);
@@ -122,13 +124,13 @@ public class Database {
                     users.put(username, newAdmin);
                     return newAdmin;
                 }
-                throw new IllegalAccessException("you tried registering an aadmin and the username already exists");
+                throw new IllegalAccessException("you tried registering an admin and the username already exists");
             }
         }
         return null;
     }
 
-    public User registerStudent(String username, String password) {
+    public User registerStudent(String username, String password) throws IllegalAccessException {
         if (!users.containsKey(username)){
             synchronized (usersLock){
                 if (!users.containsKey(username)) {
@@ -136,36 +138,46 @@ public class Database {
                     users.put(username, newStudent);
                     return newStudent;
                 }
+                throw new IllegalAccessException("you tried registering an student and the username already exists");
             }
         }
         return null;
     }
 
-    public User logIn(String username, String password) throws IllegalAccessException, IllegalArgumentException{
+    public User logIn(String username, String password) throws IllegalAccessException{
         User logAttempt = users.get(username);
-        if (logAttempt!=null){
-            if (!logAttempt.isLoggedIn()){
-                if (logAttempt.getPassword().equals(password)) {
-                    logAttempt.logIn();
-                    return logAttempt;
+        if (logAttempt!=null) {
+            if (logAttempt.getPassword().equals(password)) {
+                if (!logAttempt.isLoggedIn()) {
+                    synchronized (logAttempt) {
+                        if (!logAttempt.isLoggedIn()) {
+                            logAttempt.logIn();
+                            return logAttempt;
+                        }
+                    }
                 }
-                throw new IllegalAccessException("password incorrect");
+                throw new IllegalAccessException("user is already logged in");
             }
-            throw new IllegalAccessException("user is already logged in");
+            throw new IllegalAccessException("password incorrect");
+
         }
-        throw new IllegalArgumentException("no such username in the system");
+        throw new IllegalAccessException("no such username in the system");
     }
 
-    public void logOut(String username) throws IllegalAccessException, IllegalArgumentException{
+    public void logOut(String username) throws IllegalAccessException{
         User logOutRequester = users.get(username);
         if (logOutRequester!=null){
             if (logOutRequester.isLoggedIn()){
-                logOutRequester.logOut();
-                return;
+                synchronized (logOutRequester) {
+                    if (logOutRequester.isLoggedIn()) {
+                        logOutRequester.logOut();
+                        return;
+                    }
+                }
             }
             throw new IllegalAccessException("user is already logged out");
         }
-        throw new IllegalArgumentException("no such username in the system");
+        throw new IllegalAccessException("no such username in the system");
     }
 
     public void courseRegister(String username, Integer courseNumber) throws IllegalAccessException {
@@ -173,31 +185,31 @@ public class Database {
         Course registerTo = courses.get(courseNumber);
         if (regRequester != null && !regRequester.isAdmin()) {
             if (registerTo != null) {
-                if (regRequester.isLoggedIn()) {
-                    if (isQualified(regRequester, registerTo)) {
-                        if (!regRequester.isRegisteredTo(courseNumber)){
-                            if (registerTo.registerStudent(regRequester)) return;
-                            throw new IllegalAccessException("course is full");
+                synchronized (regRequester){
+                    synchronized (registerTo){
+                        if (regRequester.isLoggedIn()) {
+                            if (regRequester.isQualified(registerTo)) {
+                                if (!regRequester.isRegisteredTo(courseNumber)){
+                                    if (registerTo.registerStudent(regRequester)) return;
+                                    throw new IllegalAccessException("course is full");
+                                }
+                                throw new IllegalAccessException("already registered");
+                            }
+                            throw new IllegalAccessException(regRequester.getUsername() + " is not qualified to register to the course " + registerTo.getCourseName());
                         }
-                        throw new IllegalAccessException("already registered");
+                        throw new IllegalAccessException(username + " is not logged in");
                     }
-                    throw new IllegalAccessException(regRequester.getUsername() + " is not qualified to register to the course " + registerTo.getCourseName());
                 }
-                throw new IllegalAccessException(username + " is not logged in");
             }
-            throw new IllegalAccessException("the course " + registerTo.getCourseName() + " doesn't exist");
+            throw new IllegalAccessException("the course doesn't exist");
         }
         throw new IllegalAccessException("the username " + regRequester.getUsername() + " does not exist");
-    }
-    private boolean isQualified(User qualifier, Course qualifiedFor) {
-        Vector<Integer> kdam = qualifiedFor.getKdamAsVector();
-        return qualifier.isRegisteredtTo(kdam);
     }
 
     public String kdamCoursesOf(Integer courseNumber) throws IllegalAccessException{
         Course course = courses.get(courseNumber);
         if (course!=null){
-            return course.getStat();
+            return course.getKdamAsVector().toString().replaceAll(" ", "");
         }
         throw new IllegalAccessException("no such course");
     }
@@ -205,7 +217,9 @@ public class Database {
     public String getCourseStat(Integer courseNumber) throws IllegalAccessException{
         Course query = courses.get(courseNumber);
         if (query!=null){
-            return query.getStat();
+            synchronized (query) {
+                return query.getStat();
+            }
         }
         throw new IllegalAccessException("no such course");
     }
@@ -213,7 +227,9 @@ public class Database {
     public String getStudentStat(String username) throws IllegalAccessException {
         User query = users.get(username);
         if (query!=null){
-            return query.getStat();
+            synchronized (query) {
+                return query.getStat();
+            }
         }
         throw new IllegalAccessException("no such student");
     }
@@ -223,11 +239,15 @@ public class Database {
         Course query = courses.get(content);
         if (sender!=null){
             if (query!=null){
-                if (sender.isLoggedIn()){
-                    if (sender.isRegisteredTo(content)) return "REGISTERED";
-                    return "NOT REGISTERED";
+                synchronized (sender){
+                    synchronized (query){
+                        if (sender.isLoggedIn()){
+                            if (sender.isRegisteredTo(content)) return "REGISTERED";
+                            return "NOT REGISTERED";
+                        }
+                        throw new IllegalAccessException(username + " is not logged in");
+                    }
                 }
-                throw new IllegalAccessException(username + " is not logged in");
             }
             throw new IllegalAccessException("no such course");
         }
@@ -239,39 +259,35 @@ public class Database {
         Course courseToQuit = courses.get(courseNumber);
         if (sender!=null){
             if (courseToQuit!=null){
-                if (sender.isLoggedIn()){
-                    if (sender.isRegisteredTo(courseNumber)){
-                        courseToQuit.unRegister(sender);
+                synchronized (sender){
+                    synchronized (courseToQuit){
+                        if (sender.isLoggedIn()){
+                            if (sender.isRegisteredTo(courseNumber)){
+                                courseToQuit.unRegister(sender);
+                                return;
+                            }
+                            throw new IllegalAccessException("already unregistered");
+                        }
+                        throw new IllegalAccessException(username + " is not logged in");
                     }
-                    throw new IllegalAccessException("already unregistered");
                 }
-                throw new IllegalAccessException(username + " is not logged in");
             }
             throw new IllegalAccessException("no such course");
         }
         throw new IllegalAccessException("no such student");
     }
+
     public String getCoursesOf(String username) throws IllegalAccessException {
         User requester = users.get(username);
         if (requester!=null){
-            if (requester.isLoggedIn()){
-                return requester.getCoursesAsString();
+            synchronized (requester){
+                if (requester.isLoggedIn()){
+                    return requester.getCoursesAsString();
+                }
+                throw new IllegalAccessException(username + " is not logged in");
             }
-            throw new IllegalAccessException(username + " is not logged in");
         }
         throw new IllegalAccessException("no such student");
     }
-
-
-    public static void main(String[] args){
-
-        Database database = Database.getInstance();
-        String s = "";
-        try {
-            s = database.getCourseStat(400);
-        }
-        catch (IllegalAccessException i ){};
-        System.out.println(s);
-	}
 
 }

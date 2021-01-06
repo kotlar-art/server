@@ -21,21 +21,17 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
 
     @Override
     public Message decodeNextByte(byte nextByte) {
-        System.out.println("byte is " + nextByte);
-        if(len == 2){
+        pushByte(nextByte);
+        if(len == 1){
             readingOpcode = false;
-            System.out.println("reached 2 bytes");
             opcode = bytesToShort(bytes, 0, 1);
-            System.out.println("opcode is " + opcode);
             setDecoder(opcode);
         }
+        len++;
         if(command == Command.invalidInputCommand){
-            System.out.println("invalid input");
             return new IntegerMessage((short) 0,0);
         }
-        pushByte(nextByte);
         if(toEnd()){
-            System.out.println("to end");
             return popMessage();
         }
         return null;
@@ -51,9 +47,7 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
             byte[] b = Arrays.copyOfRange(bytes, 2,len);
             String content = new String(b, StandardCharsets.UTF_8);
             reset();
-            System.out.println(content);
             String[] arr = content.split("\0", 2);
-            System.out.println("arr at 0 is " + arr[0] + "arr at 1 is " + arr[1]);
             return new StringsMessage(opcode, arr);
         }
         else if(command == Command.CourseNumberCommand){
@@ -61,6 +55,7 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
             reset();
             return new IntegerMessage(opcode, content);
         }
+        reset();
         return new IntegerMessage(opcode, null);
     }
 
@@ -81,13 +76,11 @@ public class BGRSEncoderDecoder implements MessageEncoderDecoder<Message> {
 
     private void pushByte(byte nextByte) {
         if (len >= bytes.length) {
-            System.out.println("len is larger than bytes length");
             bytes = Arrays.copyOf(bytes, len * 2);
         }
-        bytes[len++] = nextByte;
+        bytes[len] = nextByte;
         byte zero = '\0';
         if(nextByte == zero&&!readingOpcode){
-            System.out.println("increased zero counter");
             zeroCounter++;
         }
     }

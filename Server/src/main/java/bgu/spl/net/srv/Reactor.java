@@ -49,12 +49,9 @@ public class Reactor<T> implements Server<T> {
 			System.out.println("Server started");
 
             while (!Thread.currentThread().isInterrupted()) {
-
                 selector.select();
                 runSelectionThreadTasks();
-
                 for (SelectionKey key : selector.selectedKeys()) {
-
                     if (!key.isValid()) {
                         continue;
                     } else if (key.isAcceptable()) {
@@ -63,9 +60,7 @@ public class Reactor<T> implements Server<T> {
                         handleReadWrite(key);
                     }
                 }
-
                 selector.selectedKeys().clear(); //clear the selected keys set so that we can know about new events
-
             }
 
         } catch (ClosedSelectorException ex) {
@@ -74,7 +69,6 @@ public class Reactor<T> implements Server<T> {
             //this is an error
             ex.printStackTrace();
         }
-
         System.out.println("server closed!!!");
         pool.shutdown();
     }

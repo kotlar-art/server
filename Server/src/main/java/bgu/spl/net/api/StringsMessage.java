@@ -9,7 +9,6 @@ public class StringsMessage extends Message<String[]>{
 
     public StringsMessage(short op, String[] content) {
         super(op);
-        System.out.println("string messsage created for " + opcode);
         this.content = content;
         database = Database.getInstance();
     }
@@ -19,24 +18,20 @@ public class StringsMessage extends Message<String[]>{
         User client = p.getUser();
         if (client==null){
             if (opcode==1){//register Admin
-                System.out.println("entered register admin and opcode is " + opcode);
-                return opcode1();
+                return adminReg();
             }
             if (opcode==2){//register Student
-                return opcode2();
+                return studentReg();
             }
             if (opcode==3){//log in
-                return opcode3(p);
+                return logIn(p);
             }
             return createError(opcode);
         }
-        if (opcode==4){//log out
-            return opcode4(client);
-        }
         if (opcode==8){
-            return opcode8(client);
+            return studentStat(client);
         }
-        return null;
+        return createError(opcode);
     }
 
 
@@ -46,12 +41,13 @@ public class StringsMessage extends Message<String[]>{
         return null;
     }
 
-    private Message opcode1(){
+    private Message adminReg(){
         User newAdmin;
         try{
             newAdmin = database.registerAdmin(content[0], content[1]);
         }
         catch (IllegalAccessException i){
+            i.printStackTrace();
             return createError(opcode);
         }
         if (newAdmin!=null) {
@@ -60,26 +56,27 @@ public class StringsMessage extends Message<String[]>{
         return createError(opcode);
     }
 
-    private Message opcode2(){
-
-        User newStudent = database.registerStudent(content[0], content[1]);
+    private Message studentReg(){
+        User newStudent = null;
+        try {
+            newStudent = database.registerStudent(content[0], content[1]);
+        }
+        catch (IllegalAccessException i){
+            createError(opcode);
+        }
         if (newStudent!=null) {
             return createACK(opcode, "");
         }
         return createError(opcode);
     }
 
-    private Message opcode3(Protocol p){
+    private Message logIn(Protocol p){
         User newUser;
         try{
             newUser = database.logIn(content[0], content[1]);
-            System.out.println("username is " + content[0] + " password is " + content[1]);
+            p.setUser(newUser);
         }
         catch (IllegalAccessException i){
-            i.printStackTrace();
-            return createError(opcode);
-        }
-        catch (IllegalArgumentException i){
             i.printStackTrace();
             return createError(opcode);
         }
@@ -87,30 +84,15 @@ public class StringsMessage extends Message<String[]>{
         return createACK(opcode, "");
 
     }
-    private Message opcode4(User user) {
 
-        try {
-            database.logOut(user.getUsername());
-        }
-        catch (IllegalArgumentException i){
-            i.printStackTrace();
-            return createError(opcode);
-        }
-        catch (IllegalAccessException e){
-            e.printStackTrace();
-            return createError(opcode);
-        }
-        return createACK(opcode, "");
-
-    }
-
-    private Message opcode8(User user){
+    private Message studentStat(User user){
         if (user.isAdmin){
             String output = "";
             try {
-                output = database.getStudentStat(user.getUsername());
+                output = database.getStudentStat(content[0]);
             }
             catch (IllegalAccessException i){
+                i.printStackTrace();
                 return createError(opcode);
             }
             return createACK(opcode, output);
